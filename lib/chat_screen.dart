@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:clipboard/clipboard.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:geminiaichatbot/shared_functions.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -60,8 +59,8 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      dynamic response = await sendPrompt(message);
-      _displayReply(message, response);
+      dynamic response = await makePostRequest({'prompt': message}, '/chat');
+      _displayReply(message, response['message']);
     } catch (error) {
       _displayReply(message, error.toString());
     }
@@ -69,8 +68,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _displayReply(String question, String reply) {
     setState(() {
-      if (_messages.isNotEmpty && _messages.last is ChatBubble) {
-        final lastMessage = _messages.last as ChatBubble;
+      if (_messages.isNotEmpty) {
+        final lastMessage = _messages.last;
         if (lastMessage.isMe && lastMessage.message == question) {
           _messages.removeLast(); // Remove the last question message
         }
@@ -101,29 +100,6 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  Future<dynamic> sendPrompt(String message) async {
-    String url = 'https://chat.waithakasam.tech/api/android/chat';
-    Map<String, dynamic> postData = {'prompt': message};
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(postData),
-      );
-
-      if (response.statusCode == 200) {
-        dynamic jsonResponse = jsonDecode(response.body);
-        return jsonResponse['message'];
-      } else {
-        throw Exception('Failed to post data: ${response.statusCode}');
-      }
-    } catch (error) {
-      throw Exception('Failed to post data: $error');
-    }
-  }
 
   Widget _buildTextComposer() {
     return Container(
