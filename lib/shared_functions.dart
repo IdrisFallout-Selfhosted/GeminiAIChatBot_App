@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 String hostName = 'http://192.168.43.138:5000';
 
-Future<dynamic> makePostRequest(Map<String, dynamic> postData, String endpoint) async {
+Future<dynamic> makePostRequest(
+    Map<String, dynamic> postData, String endpoint) async {
   String url = '$hostName/api/android$endpoint';
 
   try {
@@ -15,13 +16,15 @@ Future<dynamic> makePostRequest(Map<String, dynamic> postData, String endpoint) 
     );
 
     if (response.statusCode == 200) {
-      if (endpoint == '/login') {
-        String setCookieHeader = response.headers['set-cookie']!;
-        String accessToken = setCookieHeader.split('=')[1].split(';')[0];
-        saveAccessTokenInMemory('accessToken', accessToken);
-        saveAccessTokenInMemory('username', postData['username']);
-      }
       dynamic jsonResponse = jsonDecode(response.body);
+      if (endpoint == '/login') {
+        if (jsonResponse['responseType'] == "success") {
+          String setCookieHeader = response.headers['set-cookie']!;
+          String accessToken = setCookieHeader.split('=')[1].split(';')[0];
+          saveAccessTokenInMemory('accessToken', accessToken);
+          saveAccessTokenInMemory('username', postData['username']);
+        }
+      }
       return jsonResponse;
     } else {
       throw Exception('Failed to post data: ${response.statusCode}');
