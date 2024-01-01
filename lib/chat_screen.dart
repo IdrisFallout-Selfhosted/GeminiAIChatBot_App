@@ -15,6 +15,21 @@ class _ChatScreenState extends State<ChatScreen> {
   final List<ChatBubble> _messages = [];
 
   @override
+  void initState() {
+    super.initState();
+    _fetchChatId(); // Call the function to make the GET request when the widget is initialized
+  }
+
+  Future<void> _fetchChatId() async {
+    try {
+      dynamic response = await makeGETRequest('/new_chat');
+      // print(response);
+    } catch (error) {
+      // print(error);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

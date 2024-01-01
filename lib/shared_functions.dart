@@ -45,6 +45,13 @@ Future<dynamic> makeGETRequest(String endpoint) async {
 
     if (response.statusCode == 200) {
       dynamic jsonResponse = jsonDecode(response.body);
+      if (endpoint == '/new_chat') {
+        if (jsonResponse['responseType'] == "success") {
+          String setCookieHeader = response.headers['set-cookie']!;
+          String session = setCookieHeader.split('=')[1].split(';')[0];
+          saveAccessTokenInMemory('session', session);
+        }
+      }
       return jsonResponse;
     } else {
       throw Exception('Failed to fetch data: ${response.statusCode}');
@@ -57,6 +64,7 @@ Future<dynamic> makeGETRequest(String endpoint) async {
 Future<Map<String, String>> _getRequestHeaders() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? accessToken = prefs.getString('accessToken');
+  String? session = prefs.getString('session');
 
   Map<String, String> headers = {
     'Content-Type': 'application/json',
@@ -64,6 +72,11 @@ Future<Map<String, String>> _getRequestHeaders() async {
 
   if (accessToken != null) {
     headers['Cookie'] = 'accessToken=$accessToken';
+  }
+
+  if (session != null) {
+    // Append the session to the existing Cookie header
+    headers['Cookie'] = '${headers['Cookie'] ?? ''}; session=$session';
   }
 
   return headers;
