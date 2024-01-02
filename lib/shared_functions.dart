@@ -65,6 +65,7 @@ Future<Map<String, String>> _getRequestHeaders() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? accessToken = prefs.getString('accessToken');
   String? session = prefs.getString('session');
+  String? username = prefs.getString('username');
 
   Map<String, String> headers = {
     'Content-Type': 'application/json',
@@ -77,6 +78,10 @@ Future<Map<String, String>> _getRequestHeaders() async {
   if (session != null) {
     // Append the session to the existing Cookie header
     headers['Cookie'] = '${headers['Cookie'] ?? ''}; session=$session';
+  }
+
+  if (username != null) {
+    headers['username'] = username;
   }
 
   return headers;

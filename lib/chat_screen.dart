@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:geminiaichatbot/shared_functions.dart';
+import 'history_screen.dart'; // Import your HistoryScreen here
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -33,9 +34,24 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'GeminiAIChatBot',
-          style: TextStyle(color: Colors.white),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'GeminiAIChatBot',
+              style: TextStyle(color: Colors.white),
+            ),
+            IconButton(
+              icon: Icon(Icons.history), // Replace with your history icon
+              onPressed: () {
+                // Navigate to chat history screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HistoryScreen()),
+                );
+              },
+            ),
+          ],
         ),
       ),
       body: Column(
@@ -114,7 +130,6 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     });
   }
-
 
   Widget _buildTextComposer() {
     return Container(
