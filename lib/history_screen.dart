@@ -49,7 +49,7 @@ class HistoryScreen extends StatelessWidget {
                       // Handle what happens when a chat is tapped
                       // Access UUID via chats[index]['chat_session']
                       saveAccessTokenInMemory('session', chats[index]['chat_session']);
-                      Navigator.pop(context);
+                      Navigator.pop(context, true); // Pass any data back to the previous screen
                     },
                   ),
                 );

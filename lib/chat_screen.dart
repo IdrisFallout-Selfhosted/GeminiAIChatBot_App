@@ -24,6 +24,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _fetchChatId() async {
     try {
       dynamic response = await makeGETRequest('/initialize_chat');
+      _clearChat();
       _loadChatHistory(); // Load chat history when chat is initialized
     } catch (error) {
       // Handle error
@@ -39,6 +40,12 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (error) {
       // Handle error
     }
+  }
+
+  void _clearChat() {
+    setState(() {
+      _messages.clear(); // Clear the existing chat messages
+    });
   }
 
   void _parseChatHistory(dynamic messages) {
@@ -73,22 +80,37 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'GeminiAIChatBot',
-              style: TextStyle(color: Colors.white),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          title: const Text(
+            'GeminiAIChatBot',
+            style: TextStyle(color: Colors.white),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add), // Icon for new chat
+              onPressed: () {
+                // set session to null to create a new chat
+                saveAccessTokenInMemory('session', 'null');
+                _fetchChatId();
+              },
             ),
             IconButton(
               icon: const Icon(Icons.history), // Replace with your history icon
-              onPressed: () {
-                // Navigate to chat history screen
-                Navigator.push(
+              onPressed: () async {
+                // Navigate to chat history screen and wait for a result
+                dynamic result = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const HistoryScreen()),
                 );
+
+                if (result != null) {
+                  // Check if the result is not null, perform actions based on the result
+                  // For example, call the function that needs to be triggered upon return
+                  _fetchChatId();
+                }
               },
             ),
           ],
