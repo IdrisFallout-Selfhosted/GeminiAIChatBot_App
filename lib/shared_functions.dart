@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-String hostName = 'http://192.168.43.138:5000';
+String hostName = 'http://192.168.43.139:5000';
 
 Future<dynamic> makePostRequest(
     Map<String, dynamic> postData, String endpoint) async {
@@ -45,7 +45,7 @@ Future<dynamic> makeGETRequest(String endpoint) async {
 
     if (response.statusCode == 200) {
       dynamic jsonResponse = jsonDecode(response.body);
-      if (endpoint == '/new_chat') {
+      if (endpoint == '/initialize_chat') {
         if (jsonResponse['responseType'] == "success") {
           String setCookieHeader = response.headers['set-cookie']!;
           String session = setCookieHeader.split('=')[1].split(';')[0];

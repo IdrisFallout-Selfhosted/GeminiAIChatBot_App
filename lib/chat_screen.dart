@@ -23,10 +23,50 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _fetchChatId() async {
     try {
-      dynamic response = await makeGETRequest('/new_chat');
-      // print(response);
+      dynamic response = await makeGETRequest('/initialize_chat');
+      _loadChatHistory(); // Load chat history when chat is initialized
     } catch (error) {
-      // print(error);
+      // Handle error
+    }
+  }
+
+  Future<void> _loadChatHistory() async {
+    try {
+      dynamic response = await makeGETRequest('/load_chat');
+      if (response['responseType'] == 'success') {
+        _parseChatHistory(response['message']);
+      }
+    } catch (error) {
+      // Handle error
+    }
+  }
+
+  void _parseChatHistory(dynamic messages) {
+    try {
+      if (messages is List) {
+        for (var messagePair in messages) {
+          if (messagePair is List && messagePair.length == 2) {
+            String userText = messagePair[0]['text'];
+            String aiResponse = messagePair[1]['text'];
+
+            _messages.add(ChatBubble(
+              message: userText,
+              isMe: true, // Assuming user messages are always on the right side
+              bgColor: const Color(0xFF4CAF50),
+            ));
+
+            _messages.add(ChatBubble(
+              message: aiResponse,
+              isMe: false, // AI responses are on the left side
+              bgColor: const Color(0xFFDDDDDD),
+              child: MarkdownBody(data: aiResponse),
+            ));
+          }
+        }
+        setState(() {}); // Update the UI after adding messages
+      }
+    } catch (error) {
+      // Handle error
     }
   }
 
@@ -42,12 +82,12 @@ class _ChatScreenState extends State<ChatScreen> {
               style: TextStyle(color: Colors.white),
             ),
             IconButton(
-              icon: Icon(Icons.history), // Replace with your history icon
+              icon: const Icon(Icons.history), // Replace with your history icon
               onPressed: () {
                 // Navigate to chat history screen
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HistoryScreen()),
+                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
                 );
               },
             ),
