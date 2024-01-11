@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-String hostName = 'http://192.168.43.139:5000';
+String hostName = 'https://chat.waithakasam.tech';
 
 Future<dynamic> makePostRequest(
     Map<String, dynamic> postData, String endpoint) async {
@@ -23,6 +23,7 @@ Future<dynamic> makePostRequest(
           String accessToken = setCookieHeader.split('=')[1].split(';')[0];
           saveAccessTokenInMemory('accessToken', accessToken);
           saveAccessTokenInMemory('username', postData['username']);
+          saveAccessTokenInMemory('password', postData['password']);
         }
       }
       return jsonResponse;

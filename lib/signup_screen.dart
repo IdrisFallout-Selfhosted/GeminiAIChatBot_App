@@ -133,7 +133,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SliverAppBar(
               title: Text(
                 'Sign Up',
-                style: TextStyle(color: Colors.white), // Make the title white
+                style: TextStyle(color: Colors.black), // Make the title white
               ),
               pinned: true, // Keeps the title fixed at the top of the screen
             ),

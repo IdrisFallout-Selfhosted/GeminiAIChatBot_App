@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:geminiaichatbot/shared_functions.dart';
-import 'history_screen.dart'; // Import your HistoryScreen here
+import 'history_screen.dart';
+import 'login_screen.dart'; // Import your HistoryScreen here
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:avatar_glow/avatar_glow.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -14,20 +18,54 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final List<ChatBubble> _messages = [];
+  final FlutterTts flutterTts = FlutterTts();
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
 
   @override
   void initState() {
     super.initState();
     _fetchChatId(); // Call the function to make the GET request when the widget is initialized
+    // _initializeTts();
+    _speech = stt.SpeechToText();
+  }
+
+  @override
+  void dispose() {
+    flutterTts.stop(); // Stop speech synthesis when the widget is disposed
+    super.dispose();
+  }
+
+  Future<void> _initializeTts() async {
+    await flutterTts.setVolume(1.0);
+    await flutterTts.setSpeechRate(1.0);
+    await flutterTts.setPitch(1.0);
+  }
+
+  Future<void> _speak(String text) async {
+    await flutterTts.speak(text);
   }
 
   Future<void> _fetchChatId() async {
     try {
       dynamic response = await makeGETRequest('/initialize_chat');
-      _clearChat();
       _loadChatHistory(); // Load chat history when chat is initialized
     } catch (error) {
       // Handle error
+    }
+  }
+
+  Future<String> _getTitle() async {
+    try {
+      dynamic response = await makeGETRequest('/get_title');
+      if (response['responseType'] == 'success') {
+        return response['message'];
+      } else {
+        return 'GeminiAIChatBot';
+      }
+    } catch (error) {
+      // Handle error
+      return 'GeminiAIChatBot';
     }
   }
 
@@ -35,6 +73,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       dynamic response = await makeGETRequest('/load_chat');
       if (response['responseType'] == 'success') {
+        _clearChat();
         _parseChatHistory(response['message']);
       }
     } catch (error) {
@@ -77,28 +116,83 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) {
+            setState(() {
+              _textController.text = val.recognizedWords;
+            });
+          },
+          cancelOnError: true,
+          listenMode: stt.ListenMode.dictation,
+        );
+      }
+    } else {
+      print("Listening");
+      setState(() => _isListening = false);
+      _speech.stop();
+      // Send the complete text to the server
+      final jsonData = {
+        'prompt': _textController.text, // Send the entire text recognized
+      };
+      makePostRequest(jsonData, '/chat').then((response) {
+        if (response['responseType'] == 'success') {
+          _displayReply(_textController.text, response['message']);
+          _speak(response['message']);
+        } else {
+          _displayReply(_textController.text, 'An error occurred');
+          _speak('An error occurred');
+        }
+      }).catchError((error) {
+        print('Error: $error');
+        _displayReply(_textController.text, 'An error occurred');
+        _speak('An error occurred');
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: AppBar(
-          title: const Text(
-            'GeminiAIChatBot',
-            style: TextStyle(color: Colors.white),
+          title: FutureBuilder(
+            future: _getTitle(),
+            builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Text('GeminiAIChatBot');
+              } else if (snapshot.hasError || snapshot.data == null) {
+                return const Text('GeminiAIChatBot');
+              } else {
+                return Text(snapshot.data!);
+              }
+            },
           ),
           actions: [
             IconButton(
               icon: const Icon(Icons.add), // Icon for new chat
+              color: Colors.black,
               onPressed: () {
+                flutterTts.stop();
                 // set session to null to create a new chat
                 saveAccessTokenInMemory('session', 'null');
+                _clearChat();
                 _fetchChatId();
               },
             ),
             IconButton(
               icon: const Icon(Icons.history), // Replace with your history icon
+              color: Colors.black,
               onPressed: () async {
+                flutterTts.stop();
                 // Navigate to chat history screen and wait for a result
                 dynamic result = await Navigator.push(
                   context,
@@ -111,6 +205,24 @@ class _ChatScreenState extends State<ChatScreen> {
                   // For example, call the function that needs to be triggered upon return
                   _fetchChatId();
                 }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout), // Icon for new chat
+              color: Colors.black,
+              onPressed: () {
+                flutterTts.stop();
+                // Clear all saved values in memory
+                saveAccessTokenInMemory('accessToken', "");
+                saveAccessTokenInMemory("username", "");
+                saveAccessTokenInMemory("password", "");
+                //  go to login screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginScreen(),
+                  ),
+                );
               },
             ),
           ],
@@ -154,6 +266,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       dynamic response = await makePostRequest({'prompt': message}, '/chat');
       _displayReply(message, response['message']);
+      _speak(response['message']);
     } catch (error) {
       _displayReply(message, error.toString());
     }
@@ -209,6 +322,13 @@ class _ChatScreenState extends State<ChatScreen> {
               style: const TextStyle(color: Colors.black),
             ),
           ),
+          // IconButton(
+          //   onPressed: () {
+          //     _listen();
+          //   },
+          //   icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
+          //   color: const Color(0xFF4CAF50),
+          // ),
           IconButton(
             icon: const Icon(Icons.send),
             color: const Color(0xFF4CAF50),

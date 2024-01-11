@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geminiaichatbot/signup_screen.dart';
+import 'package:geminiaichatbot/forgotpassword_screen.dart';
 import 'chat_screen.dart';
 import 'shared_functions.dart';
 
@@ -13,6 +14,46 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfLoggedIn();
+  }
+
+  @override
+  void dispose() {
+    // Dispose the controllers when the widget is disposed
+    usernameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkIfLoggedIn() async {
+    try {
+      String? username = await getAccessTokenFromMemory('username');
+      String? password = await getAccessTokenFromMemory('password');
+
+      final response = await makePostRequest({'username': username, 'password': password}, '/login');
+
+      usernameController.clear();
+      passwordController.clear();
+
+      if (response != null && response['responseType'] == 'success') {
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ChatScreen(),
+          ),
+        );
+      } else {
+        // Handle error
+      }
+    } catch (error) {
+      // Handle error
+    }
+  }
 
   Future<void> _login(BuildContext context, String username, String password) async {
     if (username.isEmpty || password.isEmpty) {
@@ -91,14 +132,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-  void dispose() {
-    // Dispose the controllers when the widget is disposed
-    usernameController.dispose();
-    passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: NestedScrollView(
@@ -107,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SliverAppBar(
               title: Text(
                 'Login',
-                style: TextStyle(color: Colors.white), // Make the title white
+                style: TextStyle(color: Colors.black), // Make the title white
               ),
               pinned: true, // Keeps the title fixed at the top of the screen
             ),
@@ -157,7 +190,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                        // Handle forgot password functionality
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen(),
+                          ),
+                        );
                       },
                       child: const Text(
                         'Forgot password?',
