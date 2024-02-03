@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-String hostName = 'https://chat.waithakasam.tech';
+String hostName = 'https://chat.waithakasam.com';
 
 Future<dynamic> makePostRequest(
     Map<String, dynamic> postData, String endpoint) async {
