@@ -48,6 +48,10 @@ The chatbot is still under development and has some limitations. For example, it
 
 Contributions are welcome! If you find any bugs or have suggestions for improvements, please feel free to create a pull request.
 
+## Demo
+
+To see a demo of the Gemini AI chatbot in action, you can visit [here](https://chat.waithakasam.com).
+
 ## License
 
 This project is licensed under the MIT License.
